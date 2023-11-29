@@ -1,6 +1,8 @@
 #!/bin/sh
 
-set -ex
+# wget --no-verbose -O - https://raw.githubusercontent.com/KumaTea/scripts/main/linux/init.sh | sh -s -- -v
+
+set -e
 
 export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
 

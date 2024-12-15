@@ -2,33 +2,52 @@
 
 # wget https://raw.githubusercontent.com/KumaTea/scripts/main/linux/init.sh && chmod +x init.sh && ./init.sh && rm ./init.sh
 
+SSH_PUB_ROOT="AAAAC3NzaC1lZDI1NTE5AAAAINvrdbh3+SaWX5X12aRlPTrrx4ZDsOBvAo++cUKzwEUG"
+SSH_PUB_KUMA="AAAAC3NzaC1lZDI1NTE5AAAAIMRcdADho8lDItb6+3Q4qIyxGlL4Y4PkhcK6Yn0NJyLN"
+
+APT_PACKAGES="bash wget curl nano sudo resolvconf"
+
 set -e
 
 export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
 
 echo "Set ssh stuff"
 mkdir -p /root/.ssh
-echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAINvrdbh3+SaWX5X12aRlPTrrx4ZDsOBvAo++cUKzwEUG root" >> /root/.ssh/authorized_keys
+echo "ssh-ed25519 $SSH_PUB_ROOT root" >> /root/.ssh/authorized_keys
 touch /root/.hushlogin
 
 read -p "Add user kuma (y/N): " selection
 if [ "$selection" = "y" ]; then
-adduser --disabled-password --gecos "" kuma
+  adduser --disabled-password --gecos "" kuma
 
-mkdir -p /home/kuma/.ssh
-echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMRcdADho8lDItb6+3Q4qIyxGlL4Y4PkhcK6Yn0NJyLN kuma" >> /home/kuma/.ssh/authorized_keys
-touch /home/kuma/.hushlogin
+  mkdir -p /home/kuma/.ssh
+  echo "ssh-ed25519 $SSH_PUB_KUMA kuma" >> /home/kuma/.ssh/authorized_keys
+  touch /home/kuma/.hushlogin
+
+  # skip password
+  echo "kuma ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kuma
 fi
 
-echo "Modify sources.list"
+echo "Configure APT"
 mv /etc/apt/sources.list /etc/apt/sources.list.bak
 
 cat << EOF >> /etc/apt/sources.list
-deb https://mirrors.tuna.tsinghua.edu.cn/debian bookworm main contrib
-deb https://mirrors.tuna.tsinghua.edu.cn/debian bookworm-updates main contrib
-deb https://mirrors.tuna.tsinghua.edu.cn/debian bookworm-backports main contrib
-deb https://mirrors.tuna.tsinghua.edu.cn/debian-security bookworm-security main contrib
+deb https://mirrors.bfsu.edu.cn/debian bookworm main contrib
+deb https://mirrors.bfsu.edu.cn/debian bookworm-updates main contrib
+deb https://mirrors.bfsu.edu.cn/debian bookworm-backports main contrib
+deb https://mirrors.bfsu.edu.cn/debian-security bookworm-security main contrib
 EOF
+
+cat << EOF >> /etc/apt/apt.conf.d/99norecommends
+APT::Install-Recommends "0";
+APT::Install-Suggests "0";
+EOF
+
+echo "Install packages"
+# remember to clean up
+apt update
+apt install -y $APT_PACKAGES
+apt clean
 
 echo "Set timezone"
 ln -fs /usr/share/zoneinfo/Asia/Shanghai /etc/localtime

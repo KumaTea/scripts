@@ -1,0 +1,108 @@
+OpenWrt
+
+# export GOPROXY=https://goproxy.cn
+
+Target
+	- ext4
+	- VMware
+	- gzip
+	Root: 160
+
+Base
+	DHCPv6
+	wireless-tools
+	zram
+
+Admin
+	htop
+	  lm-sensors
+	# sudo
+
+Extra
+	- autosamba
+	ipv6helper
+
+Kernel
+  Video  # https://github.com/coolsnowwolf/lede/issues#issuecomment-1369640613
+	- kmod-drm-amdgpu
+	- kmod-drm-i915
+
+Languages
+	Python
+		pip
+		requests
+
+LuCI
+	Col
+		ssl
+	App
+		acme
+		# adbyby
+		- aria2
+		diskman
+		dockerman
+		# filebrowser
+		hd-idle
+		- ipsec
+		# mwan3
+		- nlbwmon
+		# passwall
+		# qbit
+		# samba4
+		# smartdns
+		ssr-plus
+		  ipt
+		  red
+		ttyd
+		uhttpd
+		# usb-printer
+		- vsftpd
+		- webadmin
+		- xlnetacc
+		zerotier
+	Theme
+		mat
+
+Network
+	File Transfer
+		curl
+		# rsyncd
+	IP Addr
+		- ddns aliyun
+		ddns cf
+		- ddns dnspod
+	Version
+		# git
+	Web Servers/Proxies
+		# nginx-ssl
+			HTTP_V2
+			HTTP sub
+
+	acme
+	acme-dnsapi
+	cifsmount
+	iperf3
+	minieap
+
+Utilities
+	Comp
+		bz
+		gz
+		unzip
+		xz
+	Disc
+		lsblk
+		parted
+	Editors
+		nano
+	Filesystem
+		e2fsprogs
+		f2fs-tools
+	Shells
+		bash
+		fish
+
+	# docker-compose
+	# file
+	# procps-ng-watch
+	# which

@@ -1,11 +1,17 @@
 #!/bin/sh
 
 # wget https://raw.githubusercontent.com/KumaTea/scripts/main/linux/init.sh && chmod +x init.sh && ./init.sh && rm ./init.sh
+# bash -c "$(wget -qLO - https://gh.kmtea.eu/https://github.com/KumaTea/scripts/raw/refs/heads/main/linux/init.sh)"
 
 SSH_PUB_ROOT="AAAAC3NzaC1lZDI1NTE5AAAAINvrdbh3+SaWX5X12aRlPTrrx4ZDsOBvAo++cUKzwEUG"
 SSH_PUB_KUMA="AAAAC3NzaC1lZDI1NTE5AAAAIMRcdADho8lDItb6+3Q4qIyxGlL4Y4PkhcK6Yn0NJyLN"
 
 APT_PACKAGES="bash wget curl nano sudo resolvconf"
+APT_MIRROR="mirrors.bfsu.edu.cn"
+
+DISTRO=$(lsb_release -is)
+CODENAME=$(lsb_release -cs)
+
 
 set -e
 
@@ -25,18 +31,35 @@ if [ "$selection" = "y" ]; then
   touch /home/kuma/.hushlogin
 
   # skip password
+  mkdir -p /etc/sudoers.d
   echo "kuma ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/kuma
 fi
 
 echo "Configure APT"
 mv /etc/apt/sources.list /etc/apt/sources.list.bak
 
-cat << EOF >> /etc/apt/sources.list
-deb https://mirrors.bfsu.edu.cn/debian bookworm main contrib
-deb https://mirrors.bfsu.edu.cn/debian bookworm-updates main contrib
-deb https://mirrors.bfsu.edu.cn/debian bookworm-backports main contrib
-deb https://mirrors.bfsu.edu.cn/debian-security bookworm-security main contrib
+case "$DISTRO" in
+  Debian)
+    cat << EOF >> /etc/apt/sources.list
+deb https://$APT_MIRROR/debian/ $CODENAME main contrib non-free
+deb https://$APT_MIRROR/debian/ $CODENAME-updates main contrib non-free
+deb https://$APT_MIRROR/debian/ $CODENAME-backports main contrib non-free
+deb https://$APT_MIRROR/debian-security $CODENAME-security main contrib non-free
 EOF
+    ;;
+  Ubuntu)
+    cat << EOF >> /etc/apt/sources.list
+deb https://$APT_MIRROR/ubuntu/ $CODENAME main restricted universe multiverse
+deb https://$APT_MIRROR/ubuntu/ $CODENAME-security main restricted universe multiverse
+deb https://$APT_MIRROR/ubuntu/ $CODENAME-updates main restricted universe multiverse
+deb https://$APT_MIRROR/ubuntu/ $CODENAME-backports main restricted universe multiverse
+EOF
+    ;;
+  *)
+    echo "UNSUPPORTED: $DISTRO"
+    exit 1
+    ;;
+esac
 
 cat << EOF >> /etc/apt/apt.conf.d/99norecommends
 APT::Install-Recommends "0";

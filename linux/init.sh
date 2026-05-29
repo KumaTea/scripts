@@ -72,6 +72,22 @@ Components: main contrib non-free non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
     ;;
+  resolute)
+    mv /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources.bak
+    cat << EOF >> /etc/apt/sources.list.d/ubuntu.sources
+Types: deb
+URIs: https://$APT_MIRROR/ubuntu
+Suites: resolute resolute-updates resolute-backports
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: https://$APT_MIRROR/ubuntu
+Suites: resolute-security
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+EOF
+    ;;
   *)
     mv /etc/apt/sources.list /etc/apt/sources.list.bak
 
@@ -125,9 +141,10 @@ read -p "Add user kuma (y/N): " selection
 if [ "$selection" = "y" ]; then
   adduser --disabled-password --gecos "" kuma
 
-  mkdir -p /home/kuma/.ssh
+  sudo -u kuma mkdir -p /home/kuma/.ssh
+  sudo -u kuma touch /home/kuma/.ssh/authorized_keys
   echo "ssh-ed25519 $SSH_PUB_KUMA kuma" >> /home/kuma/.ssh/authorized_keys
-  touch /home/kuma/.hushlogin
+  sudo -u kuma touch /home/kuma/.hushlogin
 
   # skip password
   mkdir -p /etc/sudoers.d

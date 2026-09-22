@@ -29,19 +29,20 @@ export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
 
 case $CODENAME in
   trixie)
-    echo "Configure IPv4 for Trixie"
-
-    touch /etc/network/.pve-ignore.interfaces
-    mv /etc/network/interfaces /etc/network/interfaces.bak
-    cat << EOF >> /etc/network/interfaces
+    if [ -f /etc/network/interfaces ]; then
+      echo "Configure IPv4 for Trixie"
+      touch /etc/network/.pve-ignore.interfaces
+      mv /etc/network/interfaces /etc/network/interfaces.bak
+      cat << EOF >> /etc/network/interfaces
 auto lo
 iface lo inet loopback
 
 auto eth0
 iface eth0 inet dhcp
 EOF
-    systemctl restart networking
-    sleep 10
+      systemctl restart networking
+      sleep 10
+    fi
     ;;
   *)
     ;;
@@ -55,66 +56,60 @@ touch /root/.hushlogin
 echo "Configure APT"
 
 # DEB822 format
-case $CODENAME in
-  trixie)
+if [ "$DISTRO" = "Debian" ]; then
+  if [ -f /etc/apt/sources.list.d/debian.sources ]; then
     mv /etc/apt/sources.list.d/debian.sources /etc/apt/sources.list.d/debian.sources.bak
     cat << EOF >> /etc/apt/sources.list.d/debian.sources
 Types: deb
 URIs: https://$APT_MIRROR/debian
-Suites: trixie trixie-updates trixie-backports
+Suites: $CODENAME $CODENAME-updates $CODENAME-backports
 Components: main contrib non-free non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 
 Types: deb
 URIs: https://$APT_MIRROR/debian-security
-Suites: trixie-security
+Suites: $CODENAME-security
 Components: main contrib non-free non-free-firmware
 Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
 EOF
-    ;;
-  resolute)
-    mv /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources.bak
-    cat << EOF >> /etc/apt/sources.list.d/ubuntu.sources
-Types: deb
-URIs: https://$APT_MIRROR/ubuntu
-Suites: resolute resolute-updates resolute-backports
-Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-Types: deb
-URIs: https://$APT_MIRROR/ubuntu
-Suites: resolute-security
-Components: main restricted universe multiverse
-Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-EOF
-    ;;
-  *)
+  elif [ -f /etc/apt/sources.list ]; then
     mv /etc/apt/sources.list /etc/apt/sources.list.bak
-
-    case "$DISTRO" in
-      Debian)
-        cat << EOF >> /etc/apt/sources.list
+    cat << EOF >> /etc/apt/sources.list
 deb https://$APT_MIRROR/debian/ $CODENAME main contrib non-free
 deb https://$APT_MIRROR/debian/ $CODENAME-updates main contrib non-free
 deb https://$APT_MIRROR/debian/ $CODENAME-backports main contrib non-free
 deb https://$APT_MIRROR/debian-security $CODENAME-security main contrib non-free
 EOF
-        ;;
-      Ubuntu)
-        cat << EOF >> /etc/apt/sources.list
+  fi
+elif [ "$DISTRO" = "Ubuntu" ]; then
+  if [ -f /etc/apt/sources.list.d/ubuntu.sources ]; then
+    mv /etc/apt/sources.list.d/ubuntu.sources /etc/apt/sources.list.d/ubuntu.sources.bak
+    cat << EOF >> /etc/apt/sources.list.d/ubuntu.sources
+Types: deb
+URIs: https://$APT_MIRROR/ubuntu
+Suites: $CODENAME $CODENAME-updates $CODENAME-backports
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+Types: deb
+URIs: https://$APT_MIRROR/ubuntu
+Suites: $CODENAME-security
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+EOF
+  elif [ -f /etc/apt/sources.list ]; then
+    mv /etc/apt/sources.list /etc/apt/sources.list.bak
+    cat << EOF >> /etc/apt/sources.list
 deb https://$APT_MIRROR/ubuntu/ $CODENAME main restricted universe multiverse
 deb https://$APT_MIRROR/ubuntu/ $CODENAME-security main restricted universe multiverse
 deb https://$APT_MIRROR/ubuntu/ $CODENAME-updates main restricted universe multiverse
 deb https://$APT_MIRROR/ubuntu/ $CODENAME-backports main restricted universe multiverse
 EOF
-        ;;
-      *)
-        echo "UNSUPPORTED: $DISTRO"
-        exit 1
-        ;;
-    esac
-    ;;
-esac
+  fi
+else
+  echo "UNSUPPORTED: $DISTRO"
+  exit 1
+fi
 
 cat << EOF >> /etc/apt/apt.conf.d/99norecommends
 APT::Install-Recommends "0";
